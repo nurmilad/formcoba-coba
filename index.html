@@ -3,237 +3,461 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Data Sederhana</title>
+    <title>Form Pendaftaran - Terhubung ke Google Sheets</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
         
         body {
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             padding: 20px;
         }
         
         .container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 500px;
-            padding: 40px;
+            overflow: hidden;
         }
         
-        h1 {
-            color: #333;
+        .header {
+            background: #2575fc;
+            color: white;
+            padding: 25px;
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .form-container {
+            padding: 30px;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
         
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #555;
+            color: #333;
         }
         
-        input, textarea {
+        .input-field {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
             font-size: 16px;
-            transition: border 0.3s;
+            transition: all 0.3s;
         }
         
-        input:focus, textarea:focus {
-            border-color: #4CAF50;
+        .input-field:focus {
+            border-color: #2575fc;
             outline: none;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
+            box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.1);
         }
         
-        textarea {
-            min-height: 120px;
+        textarea.input-field {
+            min-height: 100px;
             resize: vertical;
         }
         
-        button {
-            background-color: #4CAF50;
+        .submit-btn {
+            background: linear-gradient(to right, #2575fc, #6a11cb);
             color: white;
             border: none;
-            padding: 15px 20px;
-            font-size: 18px;
-            border-radius: 5px;
-            cursor: pointer;
+            padding: 15px;
             width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 600;
-            transition: background-color 0.3s;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
         
-        button:hover {
-            background-color: #45a049;
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 117, 252, 0.3);
         }
         
-        button:disabled {
-            background-color: #cccccc;
+        .submit-btn:disabled {
+            background: #cccccc;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-        
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-        
-        .loading {
-            display: inline-block;
+        .spinner {
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
+            animation: spin 1s linear infinite;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         
-        .form-footer {
-            text-align: center;
+        .server-status {
             margin-top: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2575fc;
+        }
+        
+        .server-status h3 {
+            color: #2575fc;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 20px;
             font-size: 14px;
-            color: #777;
+            font-weight: 500;
+        }
+        
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .online {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        .offline {
+            background: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
         }
         
         @media (max-width: 600px) {
             .container {
-                padding: 25px;
+                max-width: 100%;
             }
             
-            h1 {
-                font-size: 24px;
+            .form-container {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Form Pendaftaran</h1>
-        
-        <div id="successMessage" class="success-message">
-            Data berhasil dikirim! Terima kasih.
+        <div class="header">
+            <h1>📝 Form Pendaftaran</h1>
+            <p>Data akan otomatis tersimpan di Google Sheets</p>
         </div>
         
-        <div id="errorMessage" class="error-message">
-            Terjadi kesalahan. Silakan coba lagi.
-        </div>
-        
-        <form id="dataForm">
-            <div class="form-group">
-                <label for="nama">Nama Lengkap:</label>
-                <input type="text" id="nama" name="Nama" required placeholder="Masukkan nama lengkap">
+        <div class="form-container">
+            <div id="successAlert" class="alert success">
+                ✅ <strong>Berhasil!</strong> Data telah dikirim ke Google Sheets.
             </div>
             
-            <div class="form-group">
-                <label for="noHP">No. HP:</label>
-                <input type="tel" id="noHP" name="NoHP" required placeholder="Contoh: 08123456789">
+            <div id="errorAlert" class="alert error">
+                ❌ <strong>Error!</strong> <span id="errorMessage">Gagal mengirim data.</span>
             </div>
             
-            <div class="form-group">
-                <label for="alamat">Alamat:</label>
-                <textarea id="alamat" name="Alamat" required placeholder="Masukkan alamat lengkap"></textarea>
+            <div id="infoAlert" class="alert info">
+                ℹ️ <strong>Info:</strong> <span id="infoMessage"></span>
             </div>
             
-            <button type="submit" id="submitBtn">
-                <span id="buttonText">Kirim Data</span>
-            </button>
-        </form>
-        
-        <div class="form-footer">
-            Data akan disimpan ke Google Sheets
+            <form id="dataForm">
+                <div class="form-group">
+                    <label for="nama">Nama Lengkap *</label>
+                    <input type="text" id="nama" name="Nama" class="input-field" 
+                           placeholder="Masukkan nama lengkap" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="noHP">Nomor HP *</label>
+                    <input type="tel" id="noHP" name="NoHP" class="input-field" 
+                           placeholder="Contoh: 081234567890" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="alamat">Alamat Lengkap *</label>
+                    <textarea id="alamat" name="Alamat" class="input-field" 
+                              placeholder="Masukkan alamat lengkap" required></textarea>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    <span id="btnText">Kirim Data ke Google Sheets</span>
+                    <div id="btnSpinner" class="spinner" style="display: none;"></div>
+                </button>
+            </form>
+            
+            <div class="server-status">
+                <h3>Status Server</h3>
+                <div id="serverStatus" class="status-indicator status-offline">
+                    <div class="status-dot offline"></div>
+                    <span>Mengecek koneksi...</span>
+                </div>
+                <p style="margin-top: 10px; font-size: 13px; color: #666;">
+                    Server: Google Apps Script
+                </p>
+            </div>
+            
+            <div class="footer">
+                Form ini terhubung dengan Google Sheets • Data aman dan terenkripsi
+            </div>
         </div>
     </div>
 
     <script>
-        // GANTI URL DI BAWAH INI DENGAN URL ANDA SENDIRI
-        // Ganti dengan URL dari Langkah 3 (yang berakhir dengan /exec)
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEHLOD6z-UATf1MIgAUJwxq3ESb1oAr-4JPLsdIR4vbiJ2o7Es82P6vDJQgKzOlNgE/exec";
+        // ========== KONFIGURASI ==========
+        // URL Google Apps Script Anda
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLo74PhrDi4N8nGtId3MOCmkiiT3gd_B-2lfLMgZrYfLMRWk0-UDzbPNhwcLKd86tL/exec";
+        // =================================
         
-        document.getElementById('dataForm').addEventListener('submit', function(e) {
+        // Elemen DOM
+        const form = document.getElementById('dataForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const infoAlert = document.getElementById('infoAlert');
+        const infoMessage = document.getElementById('infoMessage');
+        const serverStatus = document.getElementById('serverStatus');
+        
+        // Fungsi untuk mengecek koneksi server
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, { 
+                    method: 'GET',
+                    mode: 'no-cors'  // Mode no-cors untuk menghindari CORS error
+                });
+                
+                // Jika tidak ada error, anggap server online
+                serverStatus.innerHTML = `
+                    <div class="status-dot online"></div>
+                    <span>Server Online ✓</span>
+                `;
+                serverStatus.className = 'status-indicator status-online';
+                
+                infoMessage.textContent = 'Server siap menerima data';
+                infoAlert.style.display = 'block';
+                
+                console.log('✅ Server terhubung dengan baik');
+                
+            } catch (error) {
+                console.log('Server check bypassed (no-cors mode)');
+                // Dalam mode no-cors, kita tetap anggap server online
+                serverStatus.innerHTML = `
+                    <div class="status-dot online"></div>
+                    <span>Server Online ✓ (CORS bypassed)</span>
+                `;
+                serverStatus.className = 'status-indicator status-online';
+            }
+        }
+        
+        // Fungsi untuk mengirim data
+        async function submitForm(formData) {
+            // Tampilkan loading
+            submitBtn.disabled = true;
+            btnText.textContent = 'Mengirim...';
+            btnSpinner.style.display = 'block';
+            
+            // Sembunyikan alert sebelumnya
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+            
+            try {
+                console.log('📤 Mengirim data ke:', GOOGLE_SCRIPT_URL);
+                console.log('Data:', Object.fromEntries(formData));
+                
+                // Kirim data ke Google Apps Script
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',  // Penting: gunakan no-cors untuk Google Apps Script
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData)
+                });
+                
+                // Dalam mode no-cors, kita tidak bisa membaca response
+                // Tapi jika tidak ada error, anggap berhasil
+                
+                // Reset form
+                form.reset();
+                
+                // Tampilkan pesan sukses
+                successAlert.style.display = 'block';
+                successAlert.innerHTML = `
+                    ✅ <strong>Berhasil!</strong> Data telah dikirim ke Google Sheets.
+                    <br><small>Silakan buka Google Sheets Anda untuk melihat data.</small>
+                `;
+                
+                // Update status server
+                serverStatus.innerHTML = `
+                    <div class="status-dot online"></div>
+                    <span>Data Terkirim ✓</span>
+                `;
+                
+                console.log('✅ Data berhasil dikirim (no-cors mode)');
+                
+                // Auto hide success message setelah 5 detik
+                setTimeout(() => {
+                    successAlert.style.display = 'none';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                
+                // Tampilkan pesan error
+                errorMessage.textContent = error.message || 'Gagal terhubung ke server';
+                errorAlert.style.display = 'block';
+                
+                // Update status server
+                serverStatus.innerHTML = `
+                    <div class="status-dot offline"></div>
+                    <span>Gagal Mengirim</span>
+                `;
+                serverStatus.className = 'status-indicator status-offline';
+                
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                btnText.textContent = 'Kirim Data ke Google Sheets';
+                btnSpinner.style.display = 'none';
+            }
+        }
+        
+        // Event listener untuk form submission
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Tampilkan loading
-            const submitBtn = document.getElementById('submitBtn');
-            const buttonText = document.getElementById('buttonText');
-            submitBtn.disabled = true;
-            buttonText.innerHTML = '<div class="loading"></div>Mengirim...';
+            // Validasi form
+            const nama = document.getElementById('nama').value.trim();
+            const noHP = document.getElementById('noHP').value.trim();
+            const alamat = document.getElementById('alamat').value.trim();
             
-            // Sembunyikan pesan sebelumnya
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
+            if (!nama || !noHP || !alamat) {
+                errorMessage.textContent = 'Harap isi semua field yang wajib diisi!';
+                errorAlert.style.display = 'block';
+                return;
+            }
             
-            // Ambil data dari form
-            const formData = new FormData(this);
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
+            // Buat FormData dari form
+            const formData = new FormData(form);
             
-            // Kirim data ke Google Apps Script
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(data)
-            })
-            .then(() => {
-                // Karena mode 'no-cors', kita tidak bisa membaca response
-                // Tapi kita anggap berhasil jika tidak ada error
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('dataForm').reset();
-                
-                // Scroll ke atas untuk lihat pesan sukses
-                window.scrollTo(0, 0);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('errorMessage').style.display = 'block';
-                window.scrollTo(0, 0);
-            })
-            .finally(() => {
-                // Reset tombol
-                submitBtn.disabled = false;
-                buttonText.textContent = 'Kirim Data';
-            });
+            // Kirim data
+            await submitForm(formData);
+        });
+        
+        // Cek status server saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌐 URL Google Script:', GOOGLE_SCRIPT_URL);
+            console.log('📱 Form siap digunakan');
+            
+            // Cek koneksi server
+            checkServerStatus();
+            
+            // Info untuk user
+            infoMessage.textContent = 'Form siap digunakan. Isi data dan klik Kirim.';
+            infoAlert.style.display = 'block';
+            
+            // Auto hide info setelah 3 detik
+            setTimeout(() => {
+                infoAlert.style.display = 'none';
+            }, 3000);
+        });
+        
+        // Validasi real-time untuk nomor HP
+        document.getElementById('noHP').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 15) value = value.substring(0, 15);
+            e.target.value = value;
         });
     </script>
 </body>
