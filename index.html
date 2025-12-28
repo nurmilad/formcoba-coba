@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Pendaftaran Siswa Baru</title>
+    <title>Form Pendaftaran Siswa Baru dengan Firebase</title>
     <style>
         * {
             margin: 0;
@@ -122,6 +122,13 @@
             display: block !important;
         }
         
+        .loading {
+            background-color: #e2f0ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+            display: block !important;
+        }
+        
         .data-table {
             width: 100%;
             border-collapse: collapse;
@@ -169,6 +176,20 @@
             border-top: 1px solid #eee;
         }
         
+        .firebase-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .firebase-info h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -184,10 +205,19 @@
             }
         }
     </style>
+    
+    <!-- Tambahkan Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Form Pendaftaran Siswa Baru</h1>
+        <h1>Form Pendaftaran Siswa Baru dengan Firebase</h1>
+        
+        <div class="firebase-info" id="firebaseStatus">
+            <h3>Status Firebase: <span id="firebaseStatusText">Memeriksa...</span></h3>
+            <p>Data akan disimpan secara permanen di Firebase dan tidak akan terhapus meskipun browser ditutup.</p>
+        </div>
         
         <form id="pendaftaranForm">
             <div class="form-group">
@@ -214,7 +244,7 @@
         
         <div class="button-group">
             <button id="tampilkanBtn">Tampilkan Pendaftar</button>
-            <button id="resetBtn">Reset Data</button>
+            <button id="resetBtn">Reset Data (Hanya untuk Admin)</button>
         </div>
         
         <table class="data-table" id="dataTable">
@@ -224,10 +254,11 @@
                     <th>Nama</th>
                     <th>No. HP</th>
                     <th>Alamat</th>
+                    <th>Tanggal Daftar</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- Data akan dimasukkan di sini oleh JavaScript -->
+                <!-- Data akan dimasukkan di sini dari Firebase -->
             </tbody>
         </table>
         
@@ -236,18 +267,30 @@
         </div>
         
         <footer>
-            <p>Form Pendaftaran Siswa Baru &copy; 2023 | Hosting: GitHub Pages</p>
+            <p>Form Pendaftaran Siswa Baru &copy; 2023 | Database: Firebase | Hosting: GitHub Pages</p>
         </footer>
     </div>
 
     <script>
-        // Array untuk menyimpan data pendaftar
-        let pendaftarList = [];
+        // ========== KONFIGURASI FIREBASE ==========
+        // GANTI KONFIGURASI INI DENGAN MILIK ANDA SENDIRI
+        const firebaseConfig = {
+           apiKey: "AIzaSyBDBqHzTTkqQsz2rFTzDR7Qzajx5kBxve4",
+  authDomain: "form-siswa-baru.firebaseapp.com",
+  databaseURL: "https://form-siswa-baru-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "form-siswa-baru",
+  storageBucket: "form-siswa-baru.firebasestorage.app",
+  messagingSenderId: "4472874796",
+  appId: "1:4472874796:web:f1e8ed1418372c6150ae89"
+        };
+        // ========== END KONFIGURASI ==========
         
-        // Ambil data dari localStorage jika ada
-        if (localStorage.getItem('pendaftarSiswa')) {
-            pendaftarList = JSON.parse(localStorage.getItem('pendaftarSiswa'));
-        }
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Referensi ke database 'pendaftar'
+        const pendaftarRef = database.ref('pendaftar');
         
         // Fungsi untuk menampilkan pesan
         function showMessage(text, type) {
@@ -261,51 +304,89 @@
             }, 5000);
         }
         
-        // Fungsi untuk menampilkan data dalam tabel
+        // Fungsi untuk menampilkan data dari Firebase
         function tampilkanData() {
-            const tableBody = document.getElementById('tableBody');
-            const dataTable = document.getElementById('dataTable');
-            const noDataDiv = document.getElementById('noData');
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = "Memuat data dari Firebase...";
+            messageDiv.className = "loading";
+            messageDiv.style.display = 'block';
             
-            // Kosongkan tabel
-            tableBody.innerHTML = '';
-            
-            if (pendaftarList.length === 0) {
-                dataTable.style.display = 'none';
-                noDataDiv.style.display = 'block';
-                return;
-            }
-            
-            // Tampilkan data
-            pendaftarList.forEach((pendaftar, index) => {
-                const row = document.createElement('tr');
-                
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${pendaftar.nama}</td>
-                    <td>${pendaftar.noHp}</td>
-                    <td>${pendaftar.alamat}</td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-            
-            dataTable.style.display = 'table';
-            noDataDiv.style.display = 'none';
+            pendaftarRef.once('value')
+                .then((snapshot) => {
+                    const tableBody = document.getElementById('tableBody');
+                    const dataTable = document.getElementById('dataTable');
+                    const noDataDiv = document.getElementById('noData');
+                    
+                    // Kosongkan tabel
+                    tableBody.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        dataTable.style.display = 'none';
+                        noDataDiv.style.display = 'block';
+                        messageDiv.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Tampilkan data
+                    const pendaftarData = snapshot.val();
+                    let counter = 1;
+                    
+                    Object.keys(pendaftarData).forEach((key) => {
+                        const pendaftar = pendaftarData[key];
+                        const row = document.createElement('tr');
+                        
+                        // Format tanggal
+                        let tanggalDisplay = "Hari ini";
+                        if (pendaftar.timestamp) {
+                            const tanggal = new Date(pendaftar.timestamp);
+                            tanggalDisplay = tanggal.toLocaleDateString('id-ID', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                            });
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${counter}</td>
+                            <td>${pendaftar.nama}</td>
+                            <td>${pendaftar.noHp}</td>
+                            <td>${pendaftar.alamat}</td>
+                            <td>${tanggalDisplay}</td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                        counter++;
+                    });
+                    
+                    dataTable.style.display = 'table';
+                    noDataDiv.style.display = 'none';
+                    messageDiv.style.display = 'none';
+                    showMessage(`Data berhasil dimuat: ${counter-1} pendaftar ditemukan`, "success");
+                })
+                .catch((error) => {
+                    console.error("Error membaca data dari Firebase:", error);
+                    showMessage("Gagal memuat data dari Firebase. Periksa koneksi internet Anda.", "error");
+                });
         }
         
-        // Fungsi untuk reset data
+        // Fungsi untuk reset data (HATI-HATI: ini akan menghapus semua data di Firebase!)
         function resetData() {
-            if (pendaftarList.length === 0) {
-                showMessage("Tidak ada data untuk direset", "error");
-                return;
-            }
-            
-            if (confirm("Apakah Anda yakin ingin menghapus semua data pendaftar?")) {
-                pendaftarList = [];
-                localStorage.removeItem('pendaftarSiswa');
-                tampilkanData();
-                showMessage("Semua data telah direset", "success");
+            if (confirm("PERINGATAN: Ini akan menghapus SEMUA data pendaftar dari Firebase secara permanen. Apakah Anda yakin?")) {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = "Menghapus data dari Firebase...";
+                messageDiv.className = "loading";
+                messageDiv.style.display = 'block';
+                
+                pendaftarRef.remove()
+                    .then(() => {
+                        showMessage("Semua data telah dihapus dari Firebase", "success");
+                        document.getElementById('dataTable').style.display = 'none';
+                        document.getElementById('noData').style.display = 'block';
+                    })
+                    .catch((error) => {
+                        console.error("Error menghapus data dari Firebase:", error);
+                        showMessage("Gagal menghapus data dari Firebase", "error");
+                    });
             }
         }
         
@@ -324,35 +405,42 @@
                 return;
             }
             
-            // Validasi nomor HP (minimal 10 digit, maksimal 15 digit)
+            // Validasi nomor HP
             if (noHp.length < 10 || noHp.length > 15 || isNaN(noHp)) {
                 showMessage("Nomor HP harus antara 10-15 digit angka!", "error");
                 return;
             }
             
-            // Tambahkan ke array pendaftar
-            const pendaftarBaru = {
+            // Tampilkan loading
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = "Menyimpan data ke Firebase...";
+            messageDiv.className = "loading";
+            messageDiv.style.display = 'block';
+            
+            // Simpan ke Firebase
+            const newPendaftarRef = pendaftarRef.push();
+            newPendaftarRef.set({
                 nama: nama,
                 noHp: noHp,
                 alamat: alamat,
-                tanggal: new Date().toLocaleDateString('id-ID')
-            };
-            
-            pendaftarList.push(pendaftarBaru);
-            
-            // Simpan ke localStorage
-            localStorage.setItem('pendaftarSiswa', JSON.stringify(pendaftarList));
-            
-            // Tampilkan pesan sukses
-            showMessage(`Pendaftaran berhasil! ${nama} telah terdaftar.`, "success");
-            
-            // Reset form
-            document.getElementById('pendaftaranForm').reset();
-            
-            // Otomatis tampilkan data jika tabel sudah terbuka
-            if (document.getElementById('dataTable').style.display === 'table') {
-                tampilkanData();
-            }
+                timestamp: new Date().toISOString()
+            })
+            .then(() => {
+                // Tampilkan pesan sukses
+                showMessage(`Pendaftaran berhasil! ${nama} telah terdaftar di Firebase.`, "success");
+                
+                // Reset form
+                document.getElementById('pendaftaranForm').reset();
+                
+                // Otomatis tampilkan data jika tabel sudah terbuka
+                if (document.getElementById('dataTable').style.display === 'table') {
+                    tampilkanData();
+                }
+            })
+            .catch((error) => {
+                console.error("Error menyimpan ke Firebase:", error);
+                showMessage("Gagal menyimpan data ke Firebase. Periksa koneksi internet Anda.", "error");
+            });
         });
         
         // Event listener untuk tombol "Tampilkan Pendaftar"
@@ -365,13 +453,42 @@
             resetData();
         });
         
-        // Tampilkan data saat halaman pertama kali dimuat jika ada data
-        if (pendaftarList.length > 0) {
-            // Tampilkan pesan jumlah pendaftar
-            document.getElementById('message').textContent = `Ada ${pendaftarList.length} pendaftar. Klik "Tampilkan Pendaftar" untuk melihat.`;
-            document.getElementById('message').className = 'success';
-            document.getElementById('message').style.display = 'block';
-        }
+        // Cek koneksi Firebase saat halaman dimuat
+        window.addEventListener('load', function() {
+            const statusText = document.getElementById('firebaseStatusText');
+            const firebaseInfo = document.getElementById('firebaseStatus');
+            
+            // Coba baca dari Firebase untuk memastikan koneksi berhasil
+            pendaftarRef.limitToLast(1).once('value')
+                .then(() => {
+                    statusText.textContent = "Terhubung ✓";
+                    statusText.style.color = "green";
+                    firebaseInfo.style.backgroundColor = "#d4edda";
+                    firebaseInfo.style.borderColor = "#c3e6cb";
+                    
+                    // Tampilkan jumlah pendaftar jika ada
+                    pendaftarRef.once('value')
+                        .then((snapshot) => {
+                            if (snapshot.exists()) {
+                                const count = Object.keys(snapshot.val()).length;
+                                showMessage(`Firebase terhubung. Ada ${count} pendaftar tersimpan. Klik "Tampilkan Pendaftar" untuk melihat.`, "success");
+                            }
+                        });
+                })
+                .catch((error) => {
+                    console.error("Firebase connection error:", error);
+                    statusText.textContent = "Tidak Terhubung ✗";
+                    statusText.style.color = "red";
+                    firebaseInfo.style.backgroundColor = "#f8d7da";
+                    firebaseInfo.style.borderColor = "#f5c6cb";
+                    
+                    if (firebaseConfig.apiKey.includes("GANTI")) {
+                        showMessage("ERROR: Anda belum mengatur konfigurasi Firebase! Lihat petunjuk di bawah.", "error");
+                    } else {
+                        showMessage("Gagal terhubung ke Firebase. Periksa konfigurasi Anda.", "error");
+                    }
+                });
+        });
     </script>
 </body>
 </html>
